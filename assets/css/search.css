@@ -1,0 +1,33 @@
+section.search-box {
+    padding: 180px 0px 40px 0px;
+    margin-bottom: 15px;
+    height: 260px;
+}
+
+form .field-search {
+    position: relative;
+}
+
+form .field-search button{
+    position: absolute;
+    padding: 0px 20px;
+    height: 40px;
+    top: 0px;
+    right: 0px;
+    text-align: center;
+    background: #ff9800;
+    border:1px solid #ff9800;
+    border-radius: 0px 4px 4px 0px;
+    color: #ffffff;
+}
+
+form .field-search input,
+form .field-search select {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    height: 40px;
+    border:1px solid #ff9800;
+    border-radius: 4px;
+    background: #ffffff;
+}
