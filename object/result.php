@@ -2,6 +2,8 @@
   include_once "function/biblio.inc.php";
   $biblio=new Biblio();
   $search_term=isset($_GET['keyword']) ? $_GET['keyword'] : '';
+
+
 ?>
 
 <div class="s-main-content container">
