@@ -1,33 +1,21 @@
 <?php
-function sub_string($pattern, $subject)
-{
-	$n = strlen($subject);
-	$m = strlen($pattern);
+	// demo.php
 
-	for ($i = 0; $i < $n-$m; $i++) {
-		$j = 0;
-		while ($j < $m && $subject[$i+$j] == $pattern[$j]) {
-			$j++;
-		}
-		if ($j == $m) return $i;
-	}
-	return -1;
-}
+	// include composer autoloader
+	require_once __DIR__ . '/api/vendor/autoload.php';
 
-function clean($string) {
-   $string = str_replace(' ', '-', $string); // Replaces all spaces with hyphens.
-   $string = preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
+	// create stemmer
+	// cukup dijalankan sekali saja, biasanya didaftarkan di service container
+	$stemmerFactory = new \Sastrawi\Stemmer\StemmerFactory();
+	$stemmer  = $stemmerFactory->createStemmer();
 
-   return preg_replace('/-+/', '-', $string); // Replaces multiple hyphens with single one.
-}
+	// stem
+	$sentence = 'ekonomi indonesia sedang dalam bertumbuh yang membanggakan';
+	$output   = $stemmer->stem($sentence);
 
-echo sub_string('tata', 'catatan!');
-echo '</br>';
-$kata="al-qur'an";
-$kata2="nabi muhammad";
+	echo $output . "\n";
+	// ekonomi indonesia sedang dalam tumbuh yang bangga
 
-echo clean($kata).'</br>.'
-echo clean($kata2);
-
-
- ?>
+	//echo $stemmer->stem('penelitian') . "\n";
+	// mereka tiru
+?>

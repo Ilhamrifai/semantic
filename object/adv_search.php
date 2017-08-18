@@ -26,38 +26,12 @@
       <div class="clearfix"></div>
       <div class="col-sm-6">
         <div class="control-group">
-          <label class="label">Subject(s)</label>
-          <div class="controls">
-            <input type="text" name="subject" class="form-control" />
-          </div>
-        </div>
-      </div>
-      <div class="col-sm-6">
-        <div class="control-group">
           <label class="label">ISBN/ISSN</label>
           <div class="controls">
             <input type="text" name="isbn" class="form-control" placeholder="ISBN/ISSN" />
           </div>
         </div>
       </div>
-      <div class="clearfix"></div>
-      <div class="col-sm-6">
-        <div class="control-group">
-          <label class="label">Collection Type</label>
-          <div class="controls">
-            <select name="colltype" class="form-control"><option value="0">All Collections</option><option value="Fiction">Fiction</option><option value="Reference">Reference</option><option value="Textbook">Textbook</option></select>
-          </div>
-        </div>
-      </div>
-      <div class="col-sm-6">
-        <div class="control-group">
-          <label class="label">Location</label>
-          <div class="controls">
-            <select name="location" class="form-control"> <option value="0">All Locations</option><option value="My Library">My Library</option></select>
-          </div>
-        </div>
-      </div>
-      <div class="clearfix"></div>
       <div class="col-sm-6">
         <div class="control-group">
         <label class="label">GMD</label>
@@ -72,7 +46,7 @@
           <label></label>
           <div class="controls">
             <input type="hidden" name="searchtype" value="advance" />
-            <button type="submit" name="search" value="search" clas="btn btn-danger btn-block">Search</button>
+            <button type="submit" name="search" value="adv_search" clas="btn btn-danger btn-block">Search</button>
           </div>
         </div>
       </div>

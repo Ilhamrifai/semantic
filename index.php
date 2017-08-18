@@ -5,13 +5,6 @@ define('INDEX_AUTH', '1');
 
   $page_title = $sysconf['library_semantic_subname'].' | '.$sysconf['library_semantic_name'];
 
-  function clean($string) {
-     $string = str_replace(' ', '-', $string); // Replaces all spaces with hyphens.
-     $string = preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
-
-     return preg_replace('/-+/', '-', $string); // Replaces multiple hyphens with single one.
-  }
-
 
 ?>
 
@@ -35,9 +28,7 @@ define('INDEX_AUTH', '1');
 ?>
 
 <!--Main Content-->
-<?php if(isset($_GET['search']) || isset($_GET['p'])):
-
-  ?>
+<?php if(isset($_GET['search']) || isset($_GET['p'])):?>
 <section  id="content" class="s-main-page" role="main">
 
   <!-- Search on Front Page
@@ -72,10 +63,18 @@ define('INDEX_AUTH', '1');
       ============================================= -->
       <div class="col-lg-8 col-sm-9 col-xs-12 animated fadeInUp delay2">
 
-         <?php $search_term=isset($_GET['keyword']) ? $_GET['keyword'] : '';
-        if($_GET['keyword']==$search_term):
-          $biblio=new Koleksi();
+         <?php //$search_term=isset($_GET['keyword']) ? $_GET['keyword'] : '';
+         $search_term='';
+         $biblio=new Koleksi();
+         if(isset($_GET['keyword'])){
+           $search_term=trim(strip_tags(urldecode($_GET['keyword'])));
+
+         }
+
+        if($search_term && $_GET['search']=='basic'):
+
           $result=$biblio->basic_search($search_term);
+
             foreach ($result as $rs):?>
             <div class="item biblioRecord" itemscope itemtype="http://schema.org/Book" vocab="http://schema.org/" typeof="Book">
               <div class="cover-list"></div><div class="detail-list">
@@ -116,7 +115,7 @@ define('INDEX_AUTH', '1');
               <?php echo __('start it by typing one or more keywords for title, author or subject'); ?>
             </p>
               <input type="text" class="s-search animated fadeInUp delay4" id="keyword" name="keyword"/>
-              <button type="submit" name="search" value="search" class="s-btn animated fadeInUp delay4"><?php echo __('Search'); ?></button>
+              <button type="submit" name="search" value="basic" class="s-btn animated fadeInUp delay4"><?php echo __('Search'); ?></button>
             </div>
           </form>
 
