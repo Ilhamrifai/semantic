@@ -6,11 +6,22 @@ require "api/config.php";
 class Koleksi{
   var $remote_store;
   var $page_title;
-
+  var $prefix;
 
 
   function __construct(){
     $this->remote_store=array('remote_store_endpoint'=>"http://localhost/perpus-umb/semantic/api/endpoint.php");
+    $this->prefix="PREFIX : <http://localhost/perpus-umb/ontology/ontobiblio#>
+    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+    PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+    PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+    PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+    PREFIX dc: <http://purl.org/dc/elements/1.1/>
+    PREFIX iddbpedia: <http://id.dbpedia.org/resource/>
+    PREFIX dbpedia: <http://dbpedia.org/>
+    PREFIX skos: <http://www.w3.org/2004/02/skos/core#>";
+
     /*
     $this->prefix="
     PREFIX : <http://localhost/perpus-umb/ontology/ontobiblio#>
@@ -37,19 +48,10 @@ class Koleksi{
 
   function basic_search($search_term){
     $store= ARC2::getRemoteStore($this->remote_store);
-    $query=
-      "
-        PREFIX : <http://localhost/perpus-umb/ontology/ontobiblio#>
-        PREFIX owl: <http://www.w3.org/2002/07/owl#>
-        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-        PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-        PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-        PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-        PREFIX dc: <http://purl.org/dc/elements/1.1/>
-        PREFIX iddbpedia: <http://id.dbpedia.org/resource/>
-        PREFIX dbpedia: <http://dbpedia.org/>
-        PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
-        select  distinct ?title ?author ?topic
+    $prefix_query=$this->prefix;
+    $select="select  distinct ?title ?author";
+    /*$where=
+        "
         where {
         {
            ?x a :Biblio; :Biblio_title ?title ; :hasAuthor ?y; :hasTopic ?xy. FILTER REGEX (str(?title), '{$search_term}','i')
@@ -65,7 +67,22 @@ class Koleksi{
           ?xy a :Topic; :Topic_title ?topic ; :IsTopicOf ?x.
        }
       }
+    ";*/
+    $where=
+        "
+        where {
+        {
+           ?x a :Biblio; :Biblio_title ?title ; :hasAuthor ?y; :hasTopic ?xy. FILTER REGEX (str(?title), '{$search_term}','i')
+           ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.
+
+        } union {
+          ?x a :Biblio; :Biblio_title ?title ; :hasTopic ?xy.
+          ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.FILTER REGEX (str(?author),'{$search_term}','i')
+
+       }
+      }ORDER BY ASC(?title)
     ";
+    $query=$prefix_query.$select.$where;
 
     $rows=$store->query($query,'rows');
     //$cl_rows=clean($rows);
@@ -102,8 +119,6 @@ class Koleksi{
       PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
       PREFIX foaf: <http://xmlns.com/foaf/0.1/>
       PREFIX dc: <http://purl.org/dc/elements/1.1/>
-      PREFIX iddbpedia: <http://id.dbpedia.org/resource/>
-      PREFIX dbpedia: <http://dbpedia.org/>
       PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
       select distinct ?topic where {
         ?x a :Topic; :Topic_title ?topic .
@@ -114,10 +129,36 @@ class Koleksi{
       return $contents;
   }
 
-  /*function adv_search($search_term){
+  function getSKOSConcept(){
     $store=ARC2::getRemoteStore($this->remote_store);
-    $query=""
-  }*/
+    $prefix_query=$this->prefix;
+    $select="select distinct ?preflabel ?altlabel";
+    $where="
+            where
+              {
+                ?skos a skos:Concept; skos:prefLabel ?preflabel;
+                skos:altLabel ?altlabel.
+              }";
+    $query=$prefix_query.$select.$where;
+    /*$query2="PREFIX : <http://localhost/perpus-umb/ontology/ontobiblio#>
+      PREFIX owl: <http://www.w3.org/2002/07/owl#>
+      PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+      PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+      PREFIX dc: <http://purl.org/dc/elements/1.1/>
+      PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+
+select distinct ?preflabel ?altlabel
+where
+          {
+            ?skos a skos:Concept; skos:prefLabel ?preflabel;
+            skos:altLabel ?altlabel.
+          }";*/
+    $rows=$store->query($query,'rows');
+    $contents=array_values($rows);
+    return $contents;
+  }
 
 }
 ?>

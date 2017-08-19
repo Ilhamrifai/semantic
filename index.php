@@ -72,10 +72,23 @@ define('INDEX_AUTH', '1');
          }
 
         if($search_term && $_GET['search']=='basic'):
+          $label=$biblio->getSKOSConcept();
+          $search_term=trim($_GET['keyword']);
+          $split=explode(" ",$search_term);
+          $jumlah_kata=(integer)count($split);
+          $jml_kata=$jumlah_kata-1;
 
           $result=$biblio->basic_search($search_term);
+          for ($i=0; $i <=$jml_kata ; $i++) :
+            //print_r($split[$i]);
+            $result=$biblio->basic_search($split[$i]);
+          ?>
 
-            foreach ($result as $rs):?>
+          <?php  foreach ($result as $rs):
+            //similar_text($search_term,$rs['title'],$persentage);
+              //  if($persentage>70):
+            ?>
+
             <div class="item biblioRecord" itemscope itemtype="http://schema.org/Book" vocab="http://schema.org/" typeof="Book">
               <div class="cover-list"></div><div class="detail-list">
                 <h4><a href="" class="titleField" itemprop="name" property="name" title="<?php echo $rs['title']?>"><?php echo $rs['title'];?> </a></h4>
@@ -88,7 +101,10 @@ define('INDEX_AUTH', '1');
                 </div>
               </div>
             </div>
-        <?php endforeach;?>
+
+        <?php //endif;
+      endforeach;?>
+    <?php endfor;?>
       <?php endif; ?>
       </div>
 

@@ -1,21 +1,46 @@
 <?php
-	// demo.php
+// input misspelled word
+$input = 'carrrot';
 
-	// include composer autoloader
-	require_once __DIR__ . '/api/vendor/autoload.php';
+// array of words to check against
+$words  = array('apple','pineapple','banana','orange',
+                'radish','carrot','pea','bean','potato');
 
-	// create stemmer
-	// cukup dijalankan sekali saja, biasanya didaftarkan di service container
-	$stemmerFactory = new \Sastrawi\Stemmer\StemmerFactory();
-	$stemmer  = $stemmerFactory->createStemmer();
+// no shortest distance found, yet
+$shortest = -1;
 
-	// stem
-	$sentence = 'ekonomi indonesia sedang dalam bertumbuh yang membanggakan';
-	$output   = $stemmer->stem($sentence);
+// loop through words to find the closest
+foreach ($words as $word) {
 
-	echo $output . "\n";
-	// ekonomi indonesia sedang dalam tumbuh yang bangga
+    // calculate the distance between the input word,
+    // and the current word
+    $lev = levenshtein($input, $word);
 
-	//echo $stemmer->stem('penelitian') . "\n";
-	// mereka tiru
+    // check for an exact match
+    if ($lev == 0) {
+
+        // closest word is this one (exact match)
+        $closest = $word;
+        $shortest = 0;
+
+        // break out of the loop; we've found an exact match
+        break;
+    }
+
+    // if this distance is less than the next found shortest
+    // distance, OR if a next shortest word has not yet been found
+    if ($lev <= $shortest || $shortest < 0) {
+        // set the closest match, and shortest distance
+        $closest  = $word;
+        $shortest = $lev;
+    }
+}
+
+echo "Input word: $input\n";
+if ($shortest == 0) {
+    echo "Exact match found: $closest\n";
+} else {
+    echo "Did you mean: $closest?\n";
+}
+
 ?>
