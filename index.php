@@ -7,34 +7,34 @@ require_once __DIR__ . '/api/vendor/autoload.php';
 $page_title = $sysconf['library_semantic_subname'] . ' | ' . $sysconf['library_semantic_name'];
 
 ?>
+
+
+
 <!DOCTYPE html>
-<html lang="en" prefix="og: http://ogp.me/ns#" xmlns="http://www.w3.org/1999/xhtml">
+<html>
     <head>
-        <!-- Page Title
-  ============================================= -->
         <?php
 include_once "object/meta.php";
 ?>
     </head>
     <body>
-        <!--[if lt IE 9]>
-<div class="chromeframe">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true">activate Google Chrome Frame</a> to improve your experience.</div>
-<![endif]-->
-        <?php
-include_once 'object/header.php';
-$biblio = new Koleksi();
+       <?php
+//include_once 'object/header.php';
+$biblio         = new Koleksi();
+$stemmerFactory = new \Sastrawi\Stemmer\StemmerFactory();
+$stemmer        = $stemmerFactory->createStemmer();
 
-function findDuplicates($count){
-      return $count > 1;
-    }
-
+$stopWordRemoverFactory = new \Sastrawi\StopWordRemover\StopWordRemoverFactory();
+$stopWordRemover        = $stopWordRemoverFactory->createStopWordRemover();
+$getStopWords           = $stopWordRemoverFactory->getStopWords();
 
 ?>
-        <!--Main Content-->
-        <?php if (isset($_GET['search']) || isset($_GET['p'])):
+        <div id="headerpane">
+            <div class="container">
+            <?php if (isset($_GET['search']) || isset($_GET['p'])):
 
 ?>
-        <section class="s-main-page" id="content" role="main">
+<section class="s-main-page" id="content" role="main">
             <!-- Search on Front Page
   ============================================= -->
             <div class="s-main-search">
@@ -75,109 +75,84 @@ if (isset($_GET['p'])) {
                 <div class="row">
                     <!-- Show Result
       ============================================= -->
-                    <div class="col-lg-8 col-sm-9 col-xs-12 animated fadeInUp delay2">
-                        <?php //$search_term=isset($_GET['keyword']) ? $_GET['keyword'] : '';
+                    <div class="col-lg-12 col-sm-12 col-xs-12 animated fadeInUp delay2">
+                        <?php
+
 $search_term = '';
-/*$stopWordRemoverFactory = new \Sastrawi\StopWordRemover\stopWordRemoverFactory();
-$stopWordRemover        = $stopWordRemoverFactory->
-createStopWordRemover();
-$getStopWords           = $stopWordRemoverFactory->getStopWords();
- */
-if (isset($_GET['keyword'])) {
-    $search_term = trim(strip_tags(urldecode($_GET['keyword'])));
+//$search_term=preg_replace('/\s+/', ' ', $_GET['q']);
+if (isset($_GET['q'])) {
+
+    //$search_term=urldecode(preg_replace("![^a-z0-9]+!i", "-",$_GET['q']));
+    $search_term         = trim(strip_tags(urldecode($_GET['q'])));
+    $remove_stopword     = $stopWordRemover->remove(strtolower($search_term));
+    $search_term_af_stem = $stemmer->stem($remove_stopword);
+
 }
 
-if ($search_term && $_GET['search'] == 'basic'):
-    //$label=$biblio->getSKOSConcept();
-    //$search_term = trim($_GET['keyword']);
-    $search_term = trim($_GET['keyword']);
-    //$collection  = $biblio->getkeyword();
-    //$x               = '';
-    $hitungkata = str_word_count($search_term, 1);
-    //$hitungkata=array_diff($hitungkata,$getStopWords);
-    $wordCount  = array_count_values($hitungkata);
-    $jumlahkata = count($wordCount);
-    if ($jumlahkata == 1):
-        $result = $biblio->basic_search($search_term);
-        foreach ($result as $rs): ?>
-                            <div class="item biblioRecord" itemscope="" itemtype="http://schema.org/Book" typeof="Book" vocab="http://schema.org/">
-                                <div class="cover-list">
-                                </div>
-                                <div class="detail-list">
-                                    <h4>
-                                        <a class="titleField" href="" itemprop="name" property="name" title="<?php echo $rs['title'] ?>">
-                                            <?php echo $rs['title']; ?>
-                                        </a>
-                                        <br>
-                                            <?php echo $persentage ?>
-                                        </br>
-                                    </h4>
-                                    <div class="author" itemprop="author" itemscope="" itemtype="http://schema.org/Person" property="author">
-                                        <span class="author-name" itemprop="name" property="name">
-                                            <?php echo $rs['author']; ?>
-                                        </span>
-                                    </div>
-                                    <div class="subItem">
-                                        <a class="detailLink" href="" title="View record detail description for this title">
-                                            Record Detail
-                                        </a>
-                                        <a class="xmlDetailLink" href="/perpus-umb/index.php?p=show_detail&id=402&keywords=algoritma&inXML=true" target="_blank" title="View record detail description in XML Format">
-                                            XML Detail
-                                        </a>
-                                        <a class="openPopUp citationLink" href="/perpus-umb/index.php?p=cite&id=402&keywords=algoritma" target="_blank" title="Citation for: Dasar-Dasar Algoritma Dan Pemrograman ">
-                                            Cite
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                            <?php endforeach;
+if ($search_term):
 
-elseif ($jumlahkata >
-    1):
-    $search_exploded = explode(" ", $search_term);
-    $search_term_arr = array($search_term);
-    $result_search   = array_merge($search_term_arr, $search_exploded);
+    print_r($remove_stopword);
 
-    foreach ($result_search as $rs_search):
-        $result = $biblio->basic_search($rs_search);
-        //print_r($result);
-        foreach ($result as $rs): ?>
+    $result = "";
+    if ($_GET['search'] == 'keywords'):
+        //$search_term=trim(stripslashes(strip_tags($_GET['q'])));
+        //print_r($search_term_af_stem);
+        $result = $biblio->keyword_search($remove_stopword);
+        //print_r($result['title']);
+        //print_r($getStopWords);
 
-                            <div class="item biblioRecord" itemscope="" itemtype="http://schema.org/Book" typeof="Book" vocab="http://schema.org/">
-                                <div class="cover-list">
-                                </div>
-                                <div class="detail-list">
-                                    <h4>
-                                        <a class="titleField" href="" itemprop="name" property="name" title="<?php echo $rs['title'] ?>">
-                                            <?php echo $rs['title']; ?>
-                                        </a>
-                                        <br>
-                                            <?php echo $persentage ?>
-                                        </br>
-                                    </h4>
-                                    <div class="author" itemprop="author" itemscope="" itemtype="http://schema.org/Person" property="author">
-                                        <span class="author-name" itemprop="name" property="name">
-                                            <?php echo $rs['author']; ?>
-                                        </span>
-                                    </div>
-                                    <div class="subItem">
-                                        <a class="detailLink" href="" title="View record detail description for this title">
-                                            Record Detail
-                                        </a>
-                                        <a class="xmlDetailLink" href="/perpus-umb/index.php?p=show_detail&id=402&keywords=algoritma&inXML=true" target="_blank" title="View record detail description in XML Format">
-                                            XML Detail
-                                        </a>
-                                        <a class="openPopUp citationLink" href="/perpus-umb/index.php?p=cite&id=402&keywords=algoritma" target="_blank" title="Citation for: Dasar-Dasar Algoritma Dan Pemrograman ">
-                                            Cite
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                            <?php
-        endforeach;
-    endforeach;
-endif;
-endif;?>
+    elseif ($_GET['search'] == 'basic'):
+        $selected = $_GET['option'];
+        $result   = $biblio->basic_search($remove_stopword, $selected);
+    endif;
+
+    /*if(empty($result)):
+    $result=$biblio->multiple_keyword_search($search_term_af_stem);
+    endif;*/
+    echo "<div>".count($result)."</div>";
+
+    foreach ($result as $rs):
+        //print_r($biblio->checkSimilarity($search_term_af_stem,$rs['title']));
+        $search_term_af_title = $stemmer->stem($rs['title']);
+        //if(in_array($search_term_af_stem,$search_term_af_title)):
+        ?>  
+
+
+                <div></div>
+                <div class="item biblioRecord"">
+                <hr>
+                    <div class="cover-list">
+                    </div>
+                    <div class="detail-list">
+                        <h4>
+                            <a class="titleField" href="" itemprop="name" property="name" title="<?php echo $rs['title']; ?>">
+                                <?php echo $rs['title']; ?>
+                            </a>
+                        </h4>
+                        <div class="author" itemprop="author" itemscope="" itemtype="http://schema.org/Person" property="author">
+                            <span class="author-name" itemprop="name" property="name">
+                                <?php echo $rs['author']; ?>
+                            </span>
+                        </div>
+                        <div class="subItem">
+                            <a class="detailLink" href="" title="View record detail description for this title">
+                                Record Detail
+                            </a>
+                            <a class="xmlDetailLink" href="/perpus-umb/index.php?p=show_detail&id=402&keywords=algoritma&inXML=true" target="_blank" title="View record detail description in XML Format">
+                                XML Detail
+                            </a>
+                            <a class="openPopUp citationLink" href="/perpus-umb/index.php?p=cite&id=402&keywords=algoritma" target="_blank" title="Citation for: Dasar-Dasar Algoritma Dan Pemrograman ">
+                                Cite
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <?php
+        //endif;
+        //endfor;
+    endforeach;?>
+
+        <?php endif;?>
                     </div>
                     <div class="col-lg-4 col-sm-3 col-xs-12 animated fadeInUp delay4">
                     </div>
@@ -185,36 +160,104 @@ endif;?>
             </div>
         </section>
         <?php else: ?>
-        <main class="s-main" id="content" role="main">
-            <!-- Search form
-      ============================================= -->
-            <div class="s-main-search animated fadeInUp delay1">
-                <div id="simply-search">
-                    <form action="index.php" autocomplete="off">
-                        <h1 class="animated fadeInUp delay2">
-                            <?php echo __('SEARCH'); ?>
-                        </h1>
-                        <div class="marquee down">
-                            <p class="s-search-info">
-                                <?php echo __('start it by typing one or more keywords for title, author or subject'); ?>
-                            </p>
-                            <input class="s-search animated fadeInUp delay4" id="keyword" name="keyword" type="text"/>
-                            <button class="s-btn animated fadeInUp delay4" name="search" type="submit" value="basic">
-                                <?php echo __('Search'); ?>
-                            </button>
+                <div class="tengah">
+                    <div class="tabs-search">
+                        <ul class="nav nav-tabs" role="tablist">
+                            <li class="active" role="presentation">
+                                <a aria-controls="keyword" data-toggle="tab" href="#keyword" role="tab">
+                                    Keyword
+                                </a>
+                            </li>
+                            <li role="presentation">
+                                <a aria-controls="basic" data-toggle="tab" href="#basic" role="tab">
+                                    Basic Search
+                                </a>
+                            </li>
+                            <li role="presentation">
+                                <a aria-controls="adv" data-toggle="tab" href="#adv" role="tab">
+                                    Advanced Search
+                                </a>
+                            </li>
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="keyword" role="tabpanel">
+                                <form action="index.php" class="form form-search" id="searchform" method="GET">
+                                    <div class="input-group">
+                                       <input class="form-control input-lg" name="q" placeholder="Masukkan kata kunci pencarian berdasarkan Judul, Pengarang atau Penerbit.." type="text" >
+                                                <span class="input-group-btn">
+                                                    <button class="btn btn-default btn-lg" name="search" type="submit" value="keywords">
+                                                        <i class="fa fa-search">
+                                                        </i>
+                                                    </button>
+                                                </span>
+                                            </input>
+                                        </input>
+                                    </div>
+                                    <p>
+                                    </p>
+                                </form>
+                            </div>
+                            <div class="tab-pane" id="basic" role="tabpanel">
+                                <form action="index.php" class="form form-search searchform_buku" id="searchform">
+                                    <div class="input-group">
+                                        <div class="col-md-3" style="padding-right: 0px;padding-left: 0px;
+">
+                                            <select class="form-control input-lg" name="option">
+                                                <option selected="" value="title">
+                                                    Judul
+                                                </option>
+                                                <option value="author">
+                                                    Pengarang
+                                                </option>
+                                                <option value="topic">
+                                                    Topic
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-8" style="/*padding-left: 0px;*/padding-right: 0px;
+">
+                                             <input class="form-control input-lg" name="q" placeholder="Masukkan kata kunci pencarian berdasarkan Judul, Pengarang atau Penerbit.." type="text" >
+
+                                            </input>
+
+                                        </div>
+                                        <div "="" 0px;="" class="col-md-1 style=" padding-left:="" style="padding-left: 0px;
+">
+                                            <span class="input-group-btn">
+                                                <button class="btn btn-default btn-lg" name="search" style="width: 150%;" type="submit" value="basic">
+                                                    <i class="fa fa-search">
+                                                    </i>
+                                                </button>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <p>
+                                    </p>
+                                </form>
+                            </div>
+                            <div class="tab-pane" id="adv" role="tabpanel">
+                                <form action="#" class="form form-search searchform_buku" id="searchform">
+                                    <div class="input-group">
+                                        <input class="search_buku1 form-control input-lg hidden-xs" name="q" placeholder="Masukkan kata kunci sesuai dengan parameter yang dipilih" type="text">
+                                            <input class="search_buku2 form-control input-lg visible-xs" name="q" placeholder="Masukkan kata kunci sesuai dengan parameter yang dipilih" type="text">
+                                                <span class="input-group-btn">
+                                                    <button class="btn btn-default btn-lg" type="submit" name="search" value="keyword">
+                                                        <i class="fa fa-search">
+                                                        </i>
+                                                    </button>
+                                                </span>
+                                            </input>
+                                        </input>
+                                    </div>
+                                    <p>
+                                    </p>
+                                </form>
+                            </div>
                         </div>
-                    </form>
-                    <a class="s-search-advances" href="#" title="<?php echo __('Advanced Search') ?>">
-                        <?php echo __('Advanced Search') ?>
-                    </a>
+                    </div>
                 </div>
+            <?php endif;?>
             </div>
-        </main>
-        <?php include "object/adv_search.php";?>
-        <?php endif;?>
-        <!--End Main Content-->
-        <?php
-include_once 'object/footer.php';
-?>
+        </div>
     </body>
 </html>

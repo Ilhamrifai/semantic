@@ -1,20 +1,8 @@
 <?php
 //include_once "api/arc/ARC2.php";
-require "api/config.php";
+include "api/config.php";
 
-$search_term = str_replace("'", " ", $search_term);
-$search_term = str_replace("-", " ", $search_term);
-$search_term = str_replace(")", " ", $search_term);
-$search_term = str_replace("(", " ", $search_term);
-$search_term = str_replace("\"", " ", $search_term);
-$search_term = str_replace("/", " ", $search_term);
-$search_term = str_replace("=", " ", $search_term);
-$search_term = str_replace(".", " ", $search_term);
-$search_term = str_replace(",", " ", $search_term);
-$search_term = str_replace(":", " ", $search_term);
-$search_term = str_replace(";", " ", $search_term);
-$search_term = str_replace("!", " ", $search_term);
-$search_term = str_replace("?", " ", $search_term);
+//include "Finder.php";
 
 class Koleksi
 {
@@ -51,6 +39,7 @@ class Koleksi
     PREFIX dbpedia: <http://dbpedia.org/>
     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>";
      */
+
     }
 
     public function getkeyword()
@@ -117,16 +106,14 @@ class Koleksi
         $store        = ARC2::getRemoteStore($this->remote_store);
         $prefix_query = $this->prefix;
 
-        $select = "select distinct ?title ?author";
+        $select = "select distinct ?title ?author ?topic";
         $where  = "  where {
       {
          ?x a :Biblio; :Biblio_title ?title ; :hasAuthor ?y; :hasTopic ?xy.
          ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.
+         ?xy a :Topic; :Topic_title ?topic ; :IsTopicOf ?x.
 
-      } union {
-        ?x a :Biblio; :Biblio_title ?title ; :hasTopic ?xy.
-        ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.
-     }
+      } 
    }";
         $query = $prefix_query . $select . $where;
 
@@ -138,22 +125,23 @@ class Koleksi
 
     }
 
-
-    public function basic_search($search_term)
+    public function keyword_search($search_term)
     {
+
         $store = ARC2::getRemoteStore($this->remote_store);
         $label = $this->getSKOSConcept();
 
+        // print_r($getStopWords);
+
         $prefix_query = $this->prefix;
 
-        $select = "select  distinct ?title ?author where";
-        /*$where=
-        "
-        where {
+        $select = "select  distinct ?title ?author ?topic where";
+
+        $condition = "{
         {
         ?x a :Biblio; :Biblio_title ?title ; :hasAuthor ?y; :hasTopic ?xy. FILTER REGEX (str(?title), '{$search_term}','i')
         ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.
-        ?xy a :Topic; :Topic_title ?topic; :IsTipicOf ?x.
+        ?xy a :Topic; :Topic_title ?topic; :IsTopicOf ?x.
         } union {
         ?x a :Biblio; :Biblio_title ?title ; :hasTopic ?xy.
         ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.
@@ -163,38 +151,60 @@ class Koleksi
         ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.FILTER REGEX (str(?author),'{$search_term}','i')
         ?xy a :Topic; :Topic_title ?topic ; :IsTopicOf ?x.
         }
-        }
-        ";*/
-
-        $condition1 = "{
-          {
-               ?x a :Biblio; :Biblio_title ?title ; :hasAuthor ?y; :hasTopic ?xy. FILTER REGEX (str(?title), '{$search_term}','i')
-               ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.
-
-            }
         }";
 
-        $condition2 =
-            "
-          {
-            {
-               ?x a :Biblio; :Biblio_title ?title ; :hasAuthor ?y; :hasTopic ?xy. FILTER REGEX (str(?title), '{$search_term}','i')
-               ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.
-
-            } union {
-              ?x a :Biblio; :Biblio_title ?title ; :hasTopic ?xy.
-              ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.FILTER REGEX (str(?author),'{$search_term}','i')
-            }
-          }
-        ";
-
-        $query = $prefix_query . $select . $condition1;
+        $query = $prefix_query . $select . $condition;
 
         $rows = $store->query($query, 'rows');
-        //$cl_rows=clean($rows);
+
         $contents = array_values($rows);
 
         return $contents;
+    }
+
+    
+
+    public function basic_search($search_term, $option)
+    {
+        $store = ARC2::getRemoteStore($this->remote_store);
+        //$label = $this->getSKOSConcept();
+
+        $prefix_query = $this->prefix;
+        $select       = "select  distinct ?title ?author ?topic where";
+
+        $conditon = "";
+
+        if ($option == 'title'):
+            $condition = "
+                                                    {
+                                                        ?x a :Biblio; :Biblio_title ?title ; :hasAuthor ?y; :hasTopic ?xy. FILTER REGEX (str(?title), '{$search_term}','i')
+                                                        ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.
+                                                        ?xy a :Topic; :Topic_title ?topic; :IsTopicOf ?x.
+                                                    }";
+
+        elseif ($option == 'topic'):
+            $condition = "
+                                                    {
+                                                        ?x a :Biblio; :Biblio_title ?title ; :hasTopic ?xy.
+                                                        ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.
+                                                        ?xy a :Topic; :Topic_title ?topic ; :IsTopicOf ?x. FILTER REGEX (str(?topic),'{$search_term}','i')
+                                                    }";
+        else:
+            $condition = "
+                                                    {
+                                                        ?x a :Biblio; :Biblio_title ?title ; :hasTopic ?xy.
+                                                        ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.FILTER REGEX (str(?author),'{$search_term}','i')
+                                                        ?xy a :Topic; :Topic_title ?topic ; :IsTopicOf ?x.
+                                                    }
+                                                    ";
+        endif;
+        $query = $prefix_query . $select . $condition;
+
+        $rows = $store->query($query, 'rows');
+
+        $contents = array_values($rows);
+        return $contents;
+
     }
 
     public function getSKOSAltLabel()
@@ -208,8 +218,8 @@ class Koleksi
           skos:altLabel ?altlabel.
         }";
 
-        $rows=$store->query($prefix.$select.$condition,'rows');
-        $contents=array_values($rows);
+        $rows     = $store->query($prefix . $select . $condition, 'rows');
+        $contents = array_values($rows);
         return $contents;
 
     }
@@ -285,6 +295,92 @@ class Koleksi
         $rows     = $store->query($query, 'rows');
         $contents = array_values($rows);
         return $contents;
+    }
+
+    public function checkSimilarity($search_term, $word)
+    {
+        $percentage_similarity = 0.0;
+        $suggestion            = array();
+        $search_term           = preg_replace('/[^a-z0-9 ]+/i', '', $search_term);
+
+        similar_text(strtolower(trim($search_term)), strtolower($word), $percentage_similarity);
+        if ($percentage_similarity >= 90 && $percentage_similarity < 100) {
+            if (!in_array($suggestion)) {
+                $suggest = array_push($suggestion, $word);
+            }
+
+        }
+
+        return $percentage_similarity;
+    }
+
+
+    public function multiple_keyword_search($search_term)
+    {
+        $condition           = '';
+        $search_term_explode = explode(' ', $search_term);
+
+        $store = ARC2::getRemoteStore($this->remote_store);
+        //$label = $this->getSKOSConcept();
+
+        // print_r($getStopWords);
+
+        $prefix_query = $this->prefix;
+
+        $select = "select  distinct ?title ?author ?topic where";
+
+        for ($i = 0; $i < count($search_term_explode); $i++) {
+            /*
+            $condition = "{
+            {
+            ?x a :Biblio :Biblio_title ?title; hasAuthor ?y ; :hasTopic ?xy. FILTER REGEX(str(?title),{$search_term_explode[$i]},'i')
+            ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.
+            ?xy a :Topic; :Topic_title ?topic; :IsTopicOf ?x.
+            } union {
+            ?x a :Biblio; :Biblio_title ?title ; :hasTopic ?xy.
+            ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.
+            ?xy a :Topic; :Topic_title ?topic ; :IsTopicOf ?x. FILTER REGEX (str(?topic),'{$search_term_explode[$i]}','i')
+            } union {
+            ?x a :Biblio; :Biblio_title ?title ; :hasTopic ?xy.
+            ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.FILTER REGEX (str(?author),'{$search_term_explode[$i]}','i')
+            ?xy a :Topic; :Topic_title ?topic ; :IsTopicOf ?x.
+            }
+            }";
+             */
+
+           // $search_term_explode[$i];
+            $condition = "
+                            {
+                                ?x a :Biblio :Biblio_title ?title; hasAuthor ?y ; :hasTopic ?xy. FILTER REGEX(str(?title),{$search_term_explode[$i]},'i')
+                                ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.
+                                ?xy a :Topic; :Topic_title ?topic; :IsTopicOf ?x.
+                            } union {
+                                ?x a :Biblio; :Biblio_title ?title ; :hasTopic ?xy.
+                                ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.
+                                ?xy a :Topic; :Topic_title ?topic ; :IsTopicOf ?x. FILTER REGEX (str(?topic),'{$search_term_explode[$i]}','i')
+                            } union {
+                                ?x a :Biblio; :Biblio_title ?title ; :hasTopic ?xy.
+                                ?y a :Author; :Author_name ?author; :IsAuthorOf ?x.FILTER REGEX (str(?author),'{$search_term_explode[$i]}','i')
+                                ?xy a :Topic; :Topic_title ?topic ; :IsTopicOf ?x.
+                            }
+                        ";
+
+            //print_r($condition);
+            //$query = $prefix_query . $select . $condition;
+            //print_r($query);
+            $query=$prefix_query.$select.'{'.$condition.'}';
+           // print_r($query);
+
+            $rows=$store->query($query,'rows');
+           
+
+        }
+            //print_r($query);
+            //
+         $contents=array_values($rows);
+        return $contents;
+        
+
     }
 
 }
